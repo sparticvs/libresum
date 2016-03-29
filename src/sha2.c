@@ -74,6 +74,18 @@
 
 #define ARRAY_SZ    1024*32
 
+#define RV_SUCCESS      0
+#define RV_INVALARG     1
+#define RV_NESTEDERR    2
+/* @note
+ * RV_UNKNOWN never is returned in any legitimate execution. It is only
+ * returned if something erraneous happens on the proccessor. If this is being
+ * used in a sensitive context, then you will want to assert that you never
+ * receive this.
+ */
+#define RV_UNKNOWN      255
+
+
 // TODO Include getopts and what not
 // TODO Adjust output depending on format switch, defines below to help with that
 // TODO Implement validation checking input
@@ -126,6 +138,29 @@ const uint32_t K256[] = {
 
 const int16_t blk_sz = 64;
 const int16_t last_blk_sz = 56;
+
+typedef struct {
+    char *tv;
+    uint64_t len;
+    uint32_t hash[8];
+} testvector_t;
+
+typedef struct {
+    FILE *fp;
+    uint32_t hash[8];
+    char *filename;
+    uint32_t flags;
+} checkentry_t;
+
+typedef struct {
+    uint32_t h[8];      ///< SHA256 Hash
+    uint32_t blk[16];   ///< Block that is being worked on
+    uint32_t pos;       ///< Position in the block
+    uint64_t tot;       ///< Total bytes hashed in so far
+} sha256_ctx_t;
+
+typedef uint8_t rv_t;
+
 
 #define CH(x,y,z)   ((x&y)^(~x&z))
 #define MAJ(x,y,z)  ((x&y)^(x&z)^(y&z))
@@ -232,39 +267,6 @@ rv_t sha256compute(uint32_t *hash, const uint32_t const *msg) {
 
     return retval;
 }
-
-typedef struct {
-    char *tv;
-    uint64_t len;
-    uint32_t hash[8];
-} testvector_t;
-
-typedef struct {
-    FILE *fp;
-    uint32_t hash[8];
-    char *filename;
-    uint32_t flags;
-} checkentry_t;
-
-typedef struct {
-    uint32_t h[8];      ///< SHA256 Hash
-    uint32_t blk[16];   ///< Block that is being worked on
-    uint32_t pos;       ///< Position in the block
-    uint64_t tot;       ///< Total bytes hashed in so far
-} sha256_ctx_t;
-
-typedef uint8_t rv_t;
-
-#define RV_SUCCESS      0
-#define RV_INVALARG     1
-#define RV_NESTEDERR    2
-/* @note
- * RV_UNKNOWN never is returned in any legitimate execution. It is only
- * returned if something erraneous happens on the proccessor. If this is being
- * used in a sensitive context, then you will want to assert that you never
- * receive this.
- */
-#define RV_UNKNOWN      255
 
 
 #define NESSIE_TV_MAX 8
