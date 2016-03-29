@@ -1,15 +1,15 @@
 # LibreSUM
 A completely free to use checksum program. This implements the following
 checksum algorithms:
-  - SHA2-256 (FIPS 180-2)
+  - SHA-256 (FIPS 180-2)
 
 The goal is to implement all of these:
-  - SHA1-160
-  - SHA2-224
-  - SHA2-384
-  - SHA2-512
-  - SHA2-512/224
-  - SHA2-512/384
+  - SHA1
+  - SHA-224
+  - SHA-384
+  - SHA-512
+  - SHA-512/224
+  - SHA-512/384
   - SHA3-224
   - SHA3-256
   - SHA3-384
