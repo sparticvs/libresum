@@ -9,7 +9,7 @@ The goal is to implement all of these:
   - SHA-384
   - SHA-512
   - SHA-512/224
-  - SHA-512/384
+  - SHA-512/256
   - SHA3-224
   - SHA3-256
   - SHA3-384
