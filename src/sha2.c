@@ -426,7 +426,7 @@ rv_t sha256_initialize(sha256_ctx_t *ctx) {
     rv_t rv = RV_UNKNOWN;
 
     if (NULL == ctx) {
-        rv = RV_INVALRG;
+        rv = RV_INVALARG;
     } else {
         // We are in a stable state, initialize
         ctx->h[0] = 0x6a09e667;
