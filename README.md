@@ -26,12 +26,16 @@ what is going on.
 ## Found a bug/vuln?
 File it. No need to be secretive about it.
 
+## Requirements
+    cmake >= 2.6
+
 ## Building
 Easy peasy.
 
-    $ ./configure
+    $ mkdir build
+    $ cd build
+    $ cmake ..
     $ make
-    $ make check # if you want to do unit tests
     $ make install
 
 ## Developing
