@@ -42,7 +42,7 @@ Easy peasy.
 I probably won't accept commits. I have really high standards as to how code
 should be written.
 
-## Multiple Entry Application
+## Multiple Entry Application (Planned)
 Depending how the binary is called (for instance it's name) it how it will act.
 The point of this is that you don't need to configure aliases or wrapper
 scripts, just use a soft link to the program named as the program you want.
