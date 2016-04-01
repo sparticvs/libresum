@@ -15,6 +15,10 @@ The goal is to implement all of these:
   - SHA3-384
   - SHA3-512
 
+## Where is md5sum?
+If there is enough people that complain, maybe I'll implement, but I am going
+to refrain since it's too easy to do a collision attack against it.
+
 ## Why?
 Because some things shouldn't be GPL. This is one of those things. Everything
 is MIT. See LICENSE file.
