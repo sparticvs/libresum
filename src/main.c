@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <getopt.h>
+#include <strings.h>
 
 #define VER_MAJ     1
 #define VER_MIN     0
@@ -37,17 +38,17 @@
 #define LVL_STATUS  2
 
 // Algorithm
-#define ALGO_SHA1       0
-#define ALGO_SHA224     1
-#define ALGO_SHA256     2
-#define ALGO_SHA384     3
-#define ALGO_SHA512     4
-#define ALGO_SHA512_224 5
-#define ALGO_SHA512_256 6
-#define ALGO_SHA3_224   7
-#define ALGO_SHA3_256   8
-#define ALGO_SHA3_384   9
-#define ALGO_SHA3_512   10
+#define ALGO_SHA1_STR       "sha1"
+#define ALGO_SHA224_STR     "sha224"
+#define ALGO_SHA256_STR     "sha256"
+#define ALGO_SHA384_STR     "sha384"
+#define ALGO_SHA512_STR     "sha512"
+#define ALGO_SHA512_224_STR "sha512/224"
+#define ALGO_SHA512_256_STR "sha512/256"
+#define ALGO_SHA3_224_STR   "sha3-224"
+#define ALGO_SHA3_256_STR   "sha3-256"
+#define ALGO_SHA3_384_STR   "sha3-384"
+#define ALGO_SHA3_512_STR   "sha3-512"
 
 // Options Structure
 typedef struct {
@@ -127,7 +128,7 @@ void print_version() {
 }
 
 int execute_algo(char *algo, FILE fp, result_t *result) {
-    char *
+    
     // TODO Match algo called with native function
     // TODO Call the algo specified
     // TODO Return the status from the function
@@ -172,7 +173,6 @@ int main(int argc, char **argv) {
         }
     } while (-1 != c);
 
-    // TODO Are we going into "check" mode?
     if(opts.check) {
         // TODO Build a check table
         // TODO Calculate the sum of each file that is inculded in the file
