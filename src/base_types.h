@@ -48,6 +48,7 @@ typedef struct {
 
 typedef struct {
     const char *name;
+    const char *binary_name;
     rv_t (*init)(hash_ctx_t *);
     rv_t (*update)(hash_ctx_t *, uint8_t *, uint64_t);
     rv_t (*final)(hash_ctx_t *);

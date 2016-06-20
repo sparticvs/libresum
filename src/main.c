@@ -53,6 +53,7 @@ static hash_algo_t named_algos[] = {
 //        .final = NULL
 //    },{
         .name = "sha256",
+        .binary_name = "sha256sum",
         .init = sha256_initialize,
         .update = sha256_update,
         .final = sha256_finalize
