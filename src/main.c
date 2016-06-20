@@ -29,6 +29,9 @@
 #include <getopt.h>
 #include <strings.h>
 
+#include "base_types.h"
+#include "sha2.h"
+
 #define VER_MAJ     1
 #define VER_MIN     0
 
@@ -37,18 +40,68 @@
 #define LVL_QUIET   1
 #define LVL_STATUS  2
 
-// Algorithm
-#define ALGO_SHA1_STR       "sha1"
-#define ALGO_SHA224_STR     "sha224"
-#define ALGO_SHA256_STR     "sha256"
-#define ALGO_SHA384_STR     "sha384"
-#define ALGO_SHA512_STR     "sha512"
-#define ALGO_SHA512_224_STR "sha512/224"
-#define ALGO_SHA512_256_STR "sha512/256"
-#define ALGO_SHA3_224_STR   "sha3-224"
-#define ALGO_SHA3_256_STR   "sha3-256"
-#define ALGO_SHA3_384_STR   "sha3-384"
-#define ALGO_SHA3_512_STR   "sha3-512"
+static hash_algo_t named_algos[] = {
+    {
+//        .name = "sha1",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha224",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+        .name = "sha256",
+        .init = sha256_initialize,
+        .update = sha256_update,
+        .final = sha256_finalize
+        .new = sha256_ctx_new,
+        .free = sha256_ctx_free
+//    },{
+//        .name = "sha384",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha512",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha512/224",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha512/256",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha3-224",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha3-256",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha3-384",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+//    },{
+//        .name = "sha3-512",
+//        .init = NULL,
+//        .update = NULL,
+//        .final = NULL
+    },{
+        // End of Array. Empty on purpose!
+    }
+};
 
 // Options Structure
 typedef struct {
@@ -125,19 +178,41 @@ void print_usage(const char *called_as) {
 void print_version() {
     printf("Copyright (c) 2016 - Charles `sparticvs` Timko\n");
     printf("libresum v%d.%d\n", VER_MAJ, VER_MIN);
+    printf("----------------------------------------------\n");
+    printf("Supported Algorithms\n");
+    
+    int i = 0;
+    for (i = 0; NULL != named_algos[i].name; i++) {
+        if (i > 0) {
+            printf(", ");
+        }
+        printf("%s", named_algos[i].name);
+    }
+    printf("\n");
 }
 
-int execute_algo(char *algo, FILE fp, result_t *result) {
-    
-    // TODO Match algo called with native function
-    // TODO Call the algo specified
-    // TODO Return the status from the function
+/*
+ * Get the Hashing methods for this algo string
+ *
+ * @param algo      The string defining the algorithm to use
+ *
+ * @return Returns the functions registered with the hashing algorithm
+ */
+hash_algo_t *get_algo_by_name(const char *algo) {
+    for (i = 0; NULL != named_algos[i].name; i++) {
+        if (0 == strcasecmp(named_algos[i].name, algo)) {
+            return &named_algos[i];
+        }
+    }
+
+    return NULL;
 }
 
 int main(int argc, char **argv) {
 
-    int c = 0;
+    int c = 0, i = 0;
     int opt_index = 0;
+    hash_algo_t *algo = NULL;
     do {
         c = getopt_long(argc, argv, "a:bctw", long_opts, &opt_index);
         switch(c) {
@@ -173,6 +248,12 @@ int main(int argc, char **argv) {
         }
     } while (-1 != c);
 
+    if(opts.algo) {
+        algo = get_algo_by_name(opts.algo);
+    } else {
+        algo = get_algo_by_name("sha256");
+    }
+
     if(opts.check) {
         // TODO Build a check table
         // TODO Calculate the sum of each file that is inculded in the file
@@ -180,7 +261,22 @@ int main(int argc, char **argv) {
         // TODO Output the result depending on the flags that were set
     } else {
         // TODO Calculate the sum for each file that was referenced
-        // TODO Print the result in the proper output
+        
+        // XXX This looks very sexy!
+        hash_ctx_t *ctx = algo->new();
+        algo->init(ctx);
+
+        algo->update(ctx, bytes, len);
+
+        algo->final(ctx);
+        
+        // TODO Refactor to a print function, because this is killing the sexy
+        for(i = 0; i < ctx->len; i++) {
+            printf("%08x", ctx->hash[i]);
+        }
+        printf(" %c%s\n", ' ', filename);
+
+        algo->free(ctx);
     }
 
     return 0;

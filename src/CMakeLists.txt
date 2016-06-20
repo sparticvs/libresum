@@ -1,4 +1,4 @@
-add_executable(libresum sha2.c)
+add_executable(libresum main.c sha2.c)
 
 install (TARGETS libresum
          DESTINATION usr/sbin
