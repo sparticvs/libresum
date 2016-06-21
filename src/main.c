@@ -40,14 +40,18 @@
 #define LVL_QUIET   1
 #define LVL_STATUS  2
 
+#define DEFAULT_ALGO    "sha256"
+
 static hash_algo_t named_algos[] = {
     {
 //        .name = "sha1",
+//        .binary_name = "sha1sum",
 //        .init = NULL,
 //        .update = NULL,
 //        .final = NULL
 //    },{
 //        .name = "sha224",
+//        .binary_name = "sha224sum",
 //        .init = NULL,
 //        .update = NULL,
 //        .final = NULL
@@ -61,11 +65,13 @@ static hash_algo_t named_algos[] = {
         .free = sha256_ctx_free
 //    },{
 //        .name = "sha384",
+//        .binary_name = "sha384sum",
 //        .init = NULL,
 //        .update = NULL,
 //        .final = NULL
 //    },{
 //        .name = "sha512",
+//        ,binary_name = "sha512sum",
 //        .init = NULL,
 //        .update = NULL,
 //        .final = NULL
@@ -142,14 +148,7 @@ static struct option long_opts[] = {
     {NULL, NULL, NULL, NULL}
 };
 
-typedef struct {
-    uint8_t *hash;
-    uint32_t len;
-    int ret;
-} result_t;
-
 // TODO refactor main to do options parsing in its own function
-// TODO add algorithm selection with the options
 // TODO implement hashsum checking
 // TODO integrate the sha256sum code into this
 // TODO move the file handling code from sha256 to here
@@ -160,7 +159,7 @@ void print_usage(const char *called_as) {
     printf("Print or check checksums based on the defined algorithm.\n");
     printf("With no FILE, or when FILE is -, read standard input.\n");
     printf("\n");
-    printf("-a, --algo <algo>\talgorithm to use (sha256)\n");
+    printf("-a, --algo <algo>\talgorithm to use (see --version output)\n");
     printf("-b, --binary\t\tread in binary mode\n");
     printf("-c, --check\t\tread sums from the FILEs and check them\n");
     printf("    --tag\t\tcreate a BSD-style checksum\n");
@@ -200,8 +199,20 @@ void print_version() {
  * @return Returns the functions registered with the hashing algorithm
  */
 hash_algo_t *get_algo_by_name(const char *algo) {
+    int i = 0;
     for (i = 0; NULL != named_algos[i].name; i++) {
         if (0 == strcasecmp(named_algos[i].name, algo)) {
+            return &named_algos[i];
+        }
+    }
+
+    return NULL;
+}
+
+hash_algo_t *get_algo_by_binary(const char *binary) {
+    int i = 0;
+    for (i = 0; NULL != named_algos[i].binary_name; i++) {
+        if (0 == strcmp(named_algos[i].binary_name, binary)) {
             return &named_algos[i];
         }
     }
@@ -252,8 +263,16 @@ int main(int argc, char **argv) {
     if(opts.algo) {
         algo = get_algo_by_name(opts.algo);
     } else {
-        algo = get_algo_by_name("sha256");
+        algo = get_algo_by_binary(argv[0]);
+        if(NULL == algo) {
+            algo = get_algo_by_name(DEFAULT_ALGO);
+            // If this assertion fails, then the programmer messed up.
+            assert(NULL != algo);
+        }
     }
+
+    // TODO Validate that the requested hash exists
+    // TODO Need to differentiate between user supplied and hardcoded
 
     if(opts.check) {
         // TODO Build a check table
