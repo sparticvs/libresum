@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <getopt.h>
 #include <strings.h>
+#include <assert.h>
 
 #include "base_types.h"
 #include "sha2.h"
@@ -60,9 +61,9 @@ static hash_algo_t named_algos[] = {
         .binary_name = "sha256sum",
         .init = sha256_initialize,
         .update = sha256_update,
-        .final = sha256_finalize
+        .final = sha256_finalize,
         .new = sha256_ctx_new,
-        .free = sha256_ctx_free
+        .free = sha256_ctx_free,
 //    },{
 //        .name = "sha384",
 //        .binary_name = "sha384sum",
@@ -272,7 +273,19 @@ int main(int argc, char **argv) {
     }
 
     // TODO Validate that the requested hash exists
-    // TODO Need to differentiate between user supplied and hardcoded
+
+#define ARRAY_SZ    1024*32
+
+    FILE *fp = NULL;
+    const char **files = { "-", NULL };
+    uint8_t array[ARRAY_SZ];
+    int ndx = 0;
+    uint64_t actual = 0;
+    if(optind < argc) {
+        // Get the pointer to the files list
+        files = argv;
+        ndx = optind;
+    }
 
     if(opts.check) {
         // TODO Build a check table
@@ -280,23 +293,36 @@ int main(int argc, char **argv) {
         // TODO Compare with the check table
         // TODO Output the result depending on the flags that were set
     } else {
-        // TODO Calculate the sum for each file that was referenced
-        
-        // XXX This looks very sexy!
-        hash_ctx_t *ctx = algo->new();
-        algo->init(ctx);
+        for(; files[ndx]; ndx++) {
+            if(0 == strncmp("-", files[ndx], 1)) {
+                fp = stdin;
+            } else {
+                fp = fopen(files[ndx], "r");
+            }
 
-        algo->update(ctx, bytes, len);
+            if(ferror(fp)) {
+                perror("Opening");
+                continue;
+            }
 
-        algo->final(ctx);
-        
-        // TODO Refactor to a print function, because this is killing the sexy
-        for(i = 0; i < ctx->len; i++) {
-            printf("%08x", ctx->hash[i]);
+            hash_ctx_t *ctx = algo->new();
+            algo->init(ctx);
+
+            while(!feof(fp)) {
+                memset(array, 0, sizeof(uint8_t) * ARRAY_SZ);
+                actual = fread(array, 1, sizeof(uint8_t) * ARRAY_SZ, fp);
+                algo->update(ctx, array, actual);
+            }
+            algo->final(ctx);
+
+            // TODO Refactor to a print function, because this is killing the sexy
+            for(i = 0; i < ctx->len; i++) {
+                printf("%08x", ctx->hash[i]);
+            }
+            printf(" %c%s\n", ' ', files[ndx]);
+
+            algo->free(ctx);
         }
-        printf(" %c%s\n", ' ', filename);
-
-        algo->free(ctx);
     }
 
     return 0;

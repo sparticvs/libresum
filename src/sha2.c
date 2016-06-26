@@ -71,7 +71,8 @@
 #else
 #include <endian.h>
 #endif
-#include "sha2.c"
+#include "base_types.h"
+#include "sha2.h"
 
 #define ARRAY_SZ    1024*32
 
@@ -146,13 +147,14 @@ hash_ctx_t* sha256_ctx_new() {
 
     ctx->common.len = SHA256_HASH_WORD_LEN;
 
-    return ctx->common;
+    return &(ctx->common);
 }
 
 void sha256_ctx_free(hash_ctx_t *ctx) {
-    if(NULL != ctx) {
-        free(ctx->common.hash);
-        free(ctx);
+    sha256_ctx_t *sha_ctx = (sha256_ctx_t*)ctx;
+    if(NULL != sha_ctx) {
+        free(sha_ctx->common.hash);
+        free(sha_ctx);
     }
 }
 
