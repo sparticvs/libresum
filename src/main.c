@@ -57,13 +57,15 @@ static hash_algo_t named_algos[] = {
 //        .update = NULL,
 //        .final = NULL
 //    },{
-        .name = "sha256",
+        .name = "SHA256",
         .binary_name = "sha256sum",
         .init = sha256_initialize,
         .update = sha256_update,
         .final = sha256_finalize,
         .new = sha256_ctx_new,
         .free = sha256_ctx_free,
+        .print = sha256_print,
+        .print_bsd = sha256_print_bsd,
 //    },{
 //        .name = "sha384",
 //        .binary_name = "sha384sum",
@@ -305,7 +307,7 @@ int main(int argc, char **argv) {
                 continue;
             }
 
-            hash_ctx_t *ctx = algo->new();
+            hash_ctx_t *ctx = algo->new(algo);
             algo->init(ctx);
 
             while(!feof(fp)) {
@@ -313,13 +315,14 @@ int main(int argc, char **argv) {
                 actual = fread(array, 1, sizeof(uint8_t) * ARRAY_SZ, fp);
                 algo->update(ctx, array, actual);
             }
+            
             algo->final(ctx);
 
-            // TODO Refactor to a print function, because this is killing the sexy
-            for(i = 0; i < ctx->len; i++) {
-                printf("%08x", ctx->hash[i]);
+            if(opts.tag) {
+                algo->print_bsd(ctx, files[ndx]);
+            } else {
+                algo->print(ctx, files[ndx]);
             }
-            printf(" %c%s\n", ' ', files[ndx]);
 
             algo->free(ctx);
         }

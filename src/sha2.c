@@ -96,7 +96,7 @@
 // This is logical, as you can fscanf and have all the data you need
 #define DEFAULT_OUTPUT  "%08x%08x%08x%08x%08x%08x%08x%08x %c%s\n"
 // The %c is to output a `*' if the hash was done in binary mode
-// but on *NIX systems, this doesn't really matter as binary mode is 
+// but on *NIX systems, this doesn't really matter as binary mode is
 // the same as text mode. We do, however, want to implement this
 // correctly... There are other character outputs as well, need to
 // investigate what those are and what we need to do for them.
@@ -126,18 +126,22 @@ const uint32_t K256[] = {
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
+#define SHA256_WORD_BIT_SZ      32
+#define SHA256_WORD_SZ          SHA256_WORD_BIT_SZ / 8
 #define SHA256_HASH_WORD_LEN    8
 
 const int16_t blk_sz = 64;
 const int16_t last_blk_sz = 56;
 
-hash_ctx_t* sha256_ctx_new() {
+hash_ctx_t* sha256_ctx_new(hash_algo_t *algo) {
     sha256_ctx_t *ctx = NULL;
 
     ctx = malloc(sizeof(sha256_ctx_t));
     if(NULL == ctx) {
         return NULL;
     }
+
+    ctx->common.algo = algo;
 
     ctx->common.hash = malloc(sizeof(ctx->common.hash) * SHA256_HASH_WORD_LEN);
     if(NULL == ctx->common.hash) {
@@ -294,7 +298,7 @@ rv_t __sha256_compute(uint32_t *hash, const uint32_t const *msg) {
  * 3 threads will be used for validation
  *
  * This is really useful when you need to verify a large list of files
- * 
+ *
  * -o will enforce output like so
  *
  * <CHKSUM1:FILE1>: OK
@@ -318,7 +322,7 @@ rv_t __sha256_compute(uint32_t *hash, const uint32_t const *msg) {
 //    printf("========================================\n");
 //    // Tests for now...
 //    uint8_t i = 0, j = 0, valid = 1;
-// 
+//
 //    uint32_t rr1 = 0x12345678;
 //
 //    for(i = 0; i < 4; i++) {
@@ -426,7 +430,7 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
                 ctx->pos = 0;
             }
         }
-        
+
         // 2. If len % 64 != 0, move extra into ctx->blk
         if (len > 0 && len % 64 != 0) {
             uint8_t rem = len % 64;
@@ -438,7 +442,7 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
             ctx->pos += rem;
             ctx->tot += rem;
         }
-        
+
         // 3. Compute the data in chunks of 64-bytes
         uint64_t cnt;
         for (cnt = 0; cnt < len / 64; cnt++) {
@@ -473,7 +477,7 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
         // 1. Append 0x80 to the block and update the pos
         memset((void*)ctx->blk+ctx->pos, 0x80, 1);
         ctx->pos += 1;
-        
+
         // 2. If pos > 57, compute block, and clear
         if (ctx->pos > 57) {
             __blk_htobe(ctx->blk);
@@ -490,12 +494,29 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
         // 4. compute the last block
         __blk_htobe(ctx->blk);
         __sha256_compute(ctx->common.hash, ctx->blk);
- 
+
         // 5. return success
         rv = RV_SUCCESS;
     }
 
     return rv;
+}
+
+void sha256_print(hash_ctx_t *ctx, const char *fname) {
+    int i;
+    for(i = 0; i < ctx->len; i++) {
+        printf("%08x", ctx->hash[i]);
+    }
+    printf(" %c%s\n", ' ', fname);
+}
+
+void sha256_print_bsd(hash_ctx_t *ctx, const char *fname) {
+    int i;
+    printf("%s (%s) = ", ctx->algo->name, fname);
+    for(i = 0; i < ctx->len; i++) {
+        printf("%08x", ctx->hash[i]);
+    }
+    printf("\n");
 }
 
 //int main(int argc, char **argv) {
@@ -507,7 +528,7 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
 //
 //    for (i = 1; i < argc; i++) {
 //        filename = argv[i];
-// 
+//
 //        if(stat(filename, &sb) == 0 && !S_ISREG(sb.st_mode)) {
 //            continue;
 //        }
@@ -540,3 +561,63 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
 //
 //    return 0;
 //}
+#define NESSIE_TV_MAX 8
+const testvector_t NESSIE_SHA256_TV[] = {
+    { // Set 1, Vector 0
+        .tv = "",
+        .len = 0,
+        .hash = {
+            0xE3B0C442, 0x98FC1C14, 0x9AFBF4C8, 0x996FB924,
+            0x27AE41E4, 0x649B934C, 0xA495991B, 0x7852B855 }
+    },
+    { // Set 1, Vector 1
+        .tv = "a",
+        .len = 1,
+        .hash = {
+            0xCA978112, 0xCA1BBDCA, 0xFAC231B3, 0x9A23DC4D,
+            0xA786EFF8, 0x147C4E72, 0xB9807785, 0xAFEE48BB }
+    },
+    { // Set 1, Vector 2
+        .tv = "abc",
+        .len = 3,
+        .hash = {
+            0xBA7816BF, 0x8F01CFEA, 0x414140DE, 0x5DAE2223,
+            0xB00361A3, 0x96177A9C, 0xB410FF61, 0xF20015AD }
+    },
+    { // Set 1, Vector 3
+        .tv = "message digest",
+        .len = 14,
+        .hash = {
+            0xF7846F55, 0xCF23E14E, 0xEBEAB5B4, 0xE1550CAD,
+            0x5B509E33, 0x48FBC4EF, 0xA3A1413D, 0x393CB650 }
+    },
+    { // Set 1, Vector 4
+        .tv = "abcdefghijklmnopqrstuvwxyz",
+        .len = 26,
+        .hash = {
+            0x71C480DF, 0x93D6AE2F, 0x1EFAD144, 0x7C66C952,
+            0x5E316218, 0xCF51FC8D, 0x9ED832F2, 0xDAF18B73 }
+    },
+    { // Set 1, Vector 5
+        .tv = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+        .len = 56,
+        .hash = {
+            0x248d6a61, 0xd20638b8, 0xe5c02693, 0x0c3e6039,
+            0xa33ce459, 0x64ff2167, 0xf6ecedd4, 0x19db06c1 }
+    },
+    { // Set 1, Vector 6
+        .tv = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+        .len = 62,
+        .hash = {
+            0xDB4BFCBD, 0x4DA0CD85, 0xA60C3C37, 0xD3FBD880,
+            0x5C77F15F, 0xC6B1FDFE, 0x614EE0A7, 0xC8FDB4C0 }
+    },
+    { // Set 1, Vector 7
+        .tv = "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+        .len = 80,
+        .hash = {
+            0xF371BC4A, 0x311F2B00, 0x9EEF952D, 0xD83CA80E,
+            0x2B60026C, 0x8E935592, 0xD0F9C308, 0x453C813E }
+    },
+    /** Skipping remainder, as the last one is 1 million `a's **/
+};

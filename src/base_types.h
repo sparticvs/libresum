@@ -33,7 +33,8 @@ typedef uint8_t rv_t;
 #define RV_SUCCESS      0
 #define RV_INVALARG     1
 #define RV_NESTEDERR    2
-/* @note
+/**
+ * @note
  * RV_UNKNOWN never is returned in any legitimate execution. It is only
  * returned if something erraneous happens on the proccessor. If this is being
  * used in a sensitive context, then you will want to assert that you never
@@ -41,19 +42,26 @@ typedef uint8_t rv_t;
  */
 #define RV_UNKNOWN      255
 
+struct hash_algo;
+typedef struct hash_algo hash_algo_t;
+
 typedef struct {
+    hash_algo_t *algo;
     uint32_t *hash;
     uint32_t len;
 } hash_ctx_t;
 
-typedef struct {
+struct hash_algo {
     const char *name;
+    const char *bsd_tag;
     const char *binary_name;
     rv_t (*init)(hash_ctx_t *);
     rv_t (*update)(hash_ctx_t *, uint8_t *, uint64_t);
     rv_t (*final)(hash_ctx_t *);
-    hash_ctx_t *(*new)(void);
+    hash_ctx_t *(*new)(hash_algo_t *);
     void (*free)(hash_ctx_t *);
-} hash_algo_t;
+    void (*print)(hash_ctx_t *, const char *);
+    void (*print_bsd)(hash_ctx_t *, const char *);
+};
 
 #endif //_BASE_TYPES_H__
