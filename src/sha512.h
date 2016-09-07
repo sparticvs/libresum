@@ -36,12 +36,12 @@ typedef struct {
 } sha512_ctx_t;
 
 ///--- Prototypes
-hash_ctx_t* sha256_ctx_new(void);
-void sha256_ctx_free(hash_ctx_t *ctx);
+hash_ctx_t* sha512_ctx_new(void);
+void sha512_ctx_free(hash_ctx_t *ctx);
 
-rv_t sha256_initialize(hash_ctx_t *ctx);
-rv_t sha256_update(hash_ctx_t *ctx, uint8_t *data, uint64_t len);
-rv_t sha256_finalize(hash_ctx_t *ctx);
+rv_t sha512_initialize(hash_ctx_t *ctx);
+rv_t sha512_update(hash_ctx_t *ctx, uint8_t *data, uint64_t len);
+rv_t sha512_finalize(hash_ctx_t *ctx);
 
 typedef struct {
     char *tv;
