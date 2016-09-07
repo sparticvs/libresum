@@ -41,7 +41,7 @@
         --help     display this help and exit
         --version  output version information and exit
 
-   The sums are computed as described in FIPS-180-2.  When checking, the input
+   The sums are computed as described in FIPS-180-4.  When checking, the input
    should be a former output of this program.  The default mode is to print
    a line with checksum, a character indicating input mode ('*' for binary,
    space for text), and name for each FILE.
@@ -76,12 +76,9 @@
 
 #define ARRAY_SZ    1024*32
 
-// TODO Adjust output depending on format switch, defines below to help with that
+// TODO Move byte order functions to a compat.h file
 // TODO Implement validation checking input
 // TODO Implement verbosity level when checking
-// TODO Clean out dead code
-// TODO Clean up defines for pieces not used
-// TODO Implement multiple files
 // TODO Implement NESSIE vectors on a test switch
 // TODO Flow control implementations
 
@@ -129,6 +126,11 @@ const uint32_t K256[] = {
 #define SHA256_WORD_BIT_SZ      32
 #define SHA256_WORD_SZ          SHA256_WORD_BIT_SZ / 8
 #define SHA256_HASH_WORD_LEN    8
+#define SHA256_BLOCK_BIT_LEN    512
+#define SHA256_BLOCK_LEN        SHA256_BLOCK_BIT_LEN / 8
+
+#define SHA256_MSG_LEN_BIT_LEN  64
+#define SHA256_MSG_LEN_LEN      SDA256_MSG_LEN_BIT_LEN / 8
 
 const int16_t blk_sz = 64;
 const int16_t last_blk_sz = 56;
