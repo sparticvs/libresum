@@ -1,4 +1,4 @@
-/* sha512sum.c - Calculate the SHA512 sum of a file.
+/* sha512.c - Calculate the SHA512 sum of a file.
  *
  * The MIT License (MIT)
  *
@@ -28,7 +28,7 @@
     With no FILE, or when FILE is -, read standard input.
 
     -b, --binary         read in binary mode
-    -c, --check          read SHA5126 sums from the FILEs and check them
+    -c, --check          read SHA512 sums from the FILEs and check them
         --tag            create a BSD-style checksum
     -t, --text           read in text mode (default)
 
@@ -141,7 +141,7 @@ const uint64_t K512[] = {
 #define SHA512_BLOCK_LEN        SHA512_BLOCK_LEN / 8
 
 #define SHA512_MSG_LEN_BIT_LEN  128
-#define SDA512_MSG_LEN_LEN      SHA512_MSG_LEN_BIT_LEN / 8
+#define SHA512_MSG_LEN_LEN      SHA512_MSG_LEN_BIT_LEN / 8
 
 const int16_t blk_sz = 128;
 const int16_t last_blk_sz = 112;
