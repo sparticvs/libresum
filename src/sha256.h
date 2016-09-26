@@ -59,11 +59,5 @@ typedef struct {
     uint32_t flags;
 } checkentry_t;
 
-#define CH(x,y,z)   ((x&y)^(~x&z))
-#define MAJ(x,y,z)  ((x&y)^(x&z)^(y&z))
-#define ROTR(n,x)   ((x>>n)|(x<<(32-n)))
-#define CS0(x)      (ROTR(2,x) ^ ROTR(13,x) ^ ROTR(22,x))
-#define CS1(x)      (ROTR(6,x) ^ ROTR(11,x) ^ ROTR(25,x))
-#define SS0(x)      (ROTR(7,x) ^ ROTR(18,x) ^ (x >> 3))
-#define SS1(x)      (ROTR(17,x) ^ ROTR(19,x) ^ (x >> 10))
+
 #endif //_SHA2_H__
