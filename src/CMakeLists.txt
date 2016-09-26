@@ -1,6 +1,6 @@
-add_executable(libresum main.c sha2.c)
+add_executable(libresum main.c sha256.c sha512.c)
 
-set_property(TARGET libresum PROPERTY C_STANDARD 90)
+set_property(TARGET libresum PROPERTY C_STANDARD 99)
 
 install (TARGETS libresum
          DESTINATION usr/sbin
