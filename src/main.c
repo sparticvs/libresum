@@ -25,13 +25,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <getopt.h>
 #include <strings.h>
 #include <assert.h>
 
 #include "base_types.h"
-#include "sha2.h"
+#include "sha256.h"
+#include "sha512.h"
 
 #define VER_MAJ     1
 #define VER_MIN     0

@@ -72,7 +72,7 @@
 #include <endian.h>
 #endif
 #include "base_types.h"
-#include "sha2.h"
+#include "sha256.h"
 
 #define ARRAY_SZ    1024*32
 
