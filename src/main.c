@@ -43,6 +43,11 @@
 
 #define DEFAULT_ALGO    "sha256"
 
+char *default_inputs[] = {
+        "-",
+        NULL
+};
+
 static hash_algo_t named_algos[] = {
     {
 //        .name = "sha1",
@@ -152,13 +157,11 @@ static struct option long_opts[] = {
     {"strict", no_argument, &opts.strict, 1},
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'v'},
-    {NULL, NULL, NULL, NULL}
+    {NULL, 0, NULL, 0}
 };
 
 // TODO refactor main to do options parsing in its own function
 // TODO implement hashsum checking
-// TODO integrate the sha256sum code into this
-// TODO move the file handling code from sha256 to here
 
 void print_usage(const char *called_as) {
     printf("usage: %s [OPTION]... [FILE]...\n", called_as);
@@ -242,10 +245,10 @@ int main(int argc, char **argv) {
                 // Returned on an unknown character
             case 'h':
                 print_usage(argv[0]);
-                break;
+                return 0;
             case 'v':
                 print_version();
-                break;
+                return 0;
             case 'b':
                 opts.binary = 1;
                 break;
@@ -278,12 +281,12 @@ int main(int argc, char **argv) {
         }
     }
 
-    // TODO Validate that the requested hash exists
+    // TODO Validate that the file for the requested hash exists
 
 #define ARRAY_SZ    1024*32
 
     FILE *fp = NULL;
-    const char **files = { "-", NULL };
+    char **files = default_inputs;
     uint8_t array[ARRAY_SZ];
     int ndx = 0;
     uint64_t actual = 0;
@@ -329,6 +332,9 @@ int main(int argc, char **argv) {
             }
 
             algo->free(ctx);
+
+            // Close any open file handles
+            fclose(fp);
         }
     }
 

@@ -153,7 +153,7 @@ hash_ctx_t* sha256_ctx_new(hash_algo_t *algo) {
 
     ctx->common.algo = algo;
 
-    ctx->common.hash = malloc(sizeof(ctx->common.hash) * SHA256_HASH_WORD_LEN);
+    ctx->common.hash = malloc(SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
     if(NULL == ctx->common.hash) {
         free(ctx);
         return NULL;
@@ -375,7 +375,7 @@ rv_t sha256_initialize(hash_ctx_t *hash_ctx) {
         memcpy(ctx->common.hash, H256, SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
 
         // Clear out the blk
-        memset(ctx->blk, 0, 16 * SHA256_WORD_SZ);
+        memset(ctx->blk, 0, SHA256_BLOCK_WORD_LEN * SHA256_WORD_SZ);
 
         ctx->pos = 0;
         ctx->tot = 0;
@@ -429,7 +429,7 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
                 __sha256_compute(ctx->common.hash, ctx->blk);
                 ctx->tot += avail;
 
-                memset(ctx->blk, 0, SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
+                memset(ctx->blk, 0, SHA256_BLOCK_WORD_LEN * SHA256_WORD_SZ);
                 ctx->pos = 0;
             }
         }
@@ -486,7 +486,7 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
             __blk_htobe(ctx->blk);
             __sha256_compute(ctx->common.hash, ctx->blk);
 
-            memset(ctx->blk, 0, SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
+            memset(ctx->blk, 0, SHA256_BLOCK_WORD_LEN * SHA256_WORD_SZ);
             ctx->pos = 0;
         }
 
