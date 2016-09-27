@@ -108,8 +108,14 @@
 #define BSD_OUTPUT "SHA256 (%s) = %08x%08x%08x%08x%08x%08x%08x%08x\n"
 
 static const uint32_t H256[] = {
-    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    0x6a09e667,
+    0xbb67ae85,
+    0x3c6ef372,
+    0xa54ff53a,
+    0x510e527f,
+    0x9b05688c,
+    0x1f83d9ab,
+    0x5be0cd19,
 };
 
 static const uint32_t K256[] = {
@@ -130,18 +136,6 @@ static const uint32_t K256[] = {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
-
-#define SHA256_WORD_BIT_SZ          32
-#define SHA256_WORD_SZ              SHA256_WORD_BIT_SZ / 8
-#define SHA256_HASH_WORD_LEN        8
-#define SHA256_BLOCK_BIT_LEN        512
-#define SHA256_BLOCK_LEN            SHA256_BLOCK_BIT_LEN / 8
-
-#define SHA256_MSG_LEN_BIT_LEN      64
-#define SHA256_MSG_LEN_LEN          SHA256_MSG_LEN_BIT_LEN / 8
-
-#define SHA256_LAST_BLOCK_BIT_MAX   SHA256_BLOCK_BIT_LEN - SHA256_MSG_LEN_BIT_LEN
-#define SHA256_LAST_BLOCK_MAX       SHA256_LAST_BLOCK_BIT_MAX / 8
 
 hash_ctx_t* sha256_ctx_new(hash_algo_t *algo) {
     sha256_ctx_t *ctx = NULL;
@@ -172,7 +166,7 @@ void sha256_ctx_free(hash_ctx_t *ctx) {
     }
 }
 
-/*
+/**
  * SHA2-256 Message Schedule
  *
  * This will prepare the message schedule as per the FIPS standard
@@ -206,7 +200,8 @@ rv_t __sha256_msg_sched(uint32_t *sched, const uint32_t * const msg) {
     return retval;
 }
 
-/* SHA2-256 Computation
+/**
+ * SHA2-256 Computation
  *
  * Computes the SHA-256 hash on block boundary and is supplied the H(i-1)
  * This isn't intended to be exposed and could be shared between algos.
@@ -357,7 +352,8 @@ rv_t __sha256_compute(uint32_t *hash, const uint32_t * const msg) {
 //    }
 //}
 
-/* SHA256 Initialize
+/**
+ * SHA256 Initialize
  *
  * @param ctx       Pointer to sha-256 context to initialize
  *
@@ -390,13 +386,14 @@ rv_t sha256_initialize(hash_ctx_t *hash_ctx) {
 static inline void __blk_htobe(uint32_t *data) {
     // We assume block size
     uint8_t i;
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i < SHA256_BLOCK_WORD_LEN; i++) {
         data[i] = htobe32(data[i]);
     }
 }
 
 
-/* SHA256 Update
+/**
+ * SHA256 Update
  *
  * @param ctx       Pointer to sha-256 context to operate on
  * @param data      Pointer to data blob to bring into the hash
@@ -461,7 +458,8 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
     return rv;
 }
 
-/* SHA-256 Finalize
+/**
+ * SHA-256 Finalize
  *
  * Finish the SHA-256 computation. This pads the blocks correctly and does the
  * final update to the hash.
@@ -506,7 +504,7 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
 }
 
 void sha256_print(hash_ctx_t *ctx, const char *fname) {
-    int i;
+    size_t i;
     for(i = 0; i < ctx->len; i++) {
         printf("%08x", ((uint32_t*)ctx->hash)[i]);
     }
@@ -514,7 +512,7 @@ void sha256_print(hash_ctx_t *ctx, const char *fname) {
 }
 
 void sha256_print_bsd(hash_ctx_t *ctx, const char *fname) {
-    int i;
+    size_t i;
     printf("%s (%s) = ", ctx->algo->name, fname);
     for(i = 0; i < ctx->len; i++) {
         printf("%08x", ((uint32_t*)ctx->hash)[i]);

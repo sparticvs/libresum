@@ -1,4 +1,4 @@
-/* sha2.h - LibreSUM's Sha2 Header
+/* sha256.h - LibreSUM's SHA-256 Header
  *
  * The MIT License (MIT)
  *
@@ -23,14 +23,28 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __SHA2_H__
-#define __SHA2_H__
+#ifndef __SHA256_H__
+#define __SHA256_H__
 
 #include "base_types.h"
 
+#define SHA256_WORD_BIT_SZ          32
+#define SHA256_WORD_SZ              (SHA256_WORD_BIT_SZ / 8)
+#define SHA256_HASH_WORD_LEN        8
+
+#define SHA256_BLOCK_BIT_LEN        512
+#define SHA256_BLOCK_LEN            (SHA256_BLOCK_BIT_LEN / 8)
+#define SHA256_BLOCK_WORD_LEN       (SHA256_BLOCK_LEN / SHA256_WORD_SZ)
+
+#define SHA256_MSG_LEN_BIT_LEN      64
+#define SHA256_MSG_LEN_LEN          (SHA256_MSG_LEN_BIT_LEN / 8)
+
+#define SHA256_LAST_BLOCK_BIT_MAX   SHA256_BLOCK_BIT_LEN - SHA256_MSG_LEN_BIT_LEN
+#define SHA256_LAST_BLOCK_MAX       (SHA256_LAST_BLOCK_BIT_MAX / 8)
+
 typedef struct {
     hash_ctx_t common;
-    uint32_t blk[16];
+    uint32_t blk[SHA256_BLOCK_WORD_LEN];
     uint32_t pos;
     uint64_t tot;
 } sha256_ctx_t;
@@ -60,4 +74,4 @@ typedef struct {
 } checkentry_t;
 
 
-#endif //_SHA2_H__
+#endif //_SHA256_H__
