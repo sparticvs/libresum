@@ -77,6 +77,19 @@
 #define ARRAY_SZ    1024*32
 
 /*
+ * note: this requires a 64-bit cpu...need to fix this and remove the
+ * requirement.
+ */
+
+#define CH(x,y,z)   ((x&y)^(~x&z))
+#define MAJ(x,y,z)  ((x&y)^(x&z)^(y&z))
+#define ROTR(n,x)   ((x>>n)|(x<<(64-n)))
+#define CS0(x)      (ROTR(28,x) ^ ROTR(34,x) ^ ROTR(39,x))
+#define CS1(x)      (ROTR(14,x) ^ ROTR(18,x) ^ ROTR(41,x))
+#define SS0(x)      (ROTR(1,x) ^ ROTR(8,x) ^ (x >> 7))
+#define SS1(x)      (ROTR(19,x) ^ ROTR(61,x) ^ (x >> 6))
+
+/*
  * Note
  *
  * The intent is to mimic as much as possible the Perl script and it's output.
@@ -134,17 +147,10 @@ const uint64_t K512[] = {
     0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 };
 
-#define SHA512_WORD_BIT_SZ      64
-#define SHA512_WORD_SZ          SHA512_WORD_BIT_SZ / 8
-#define SHA512_HASH_WORD_LEN    16
-#define SHA512_BLOCK_BIT_LEN    1024
-#define SHA512_BLOCK_LEN        SHA512_BLOCK_LEN / 8
 
-#define SHA512_MSG_LEN_BIT_LEN  128
-#define SHA512_MSG_LEN_LEN      SHA512_MSG_LEN_BIT_LEN / 8
 
-const int16_t blk_sz = 128;
-const int16_t last_blk_sz = 112;
+static const int16_t blk_sz = 128;
+static const int16_t last_blk_sz = 112;
 
 hash_ctx_t* sha512_ctx_new(hash_algo_t *algo) {
     sha512_ctx_t *ctx = NULL;
@@ -175,7 +181,7 @@ void sha512_ctx_free(hash_ctx_t *ctx) {
     }
 }
 
-/*
+/**
  * SHA2-512 Message Schedule
  *
  * This will prepare the message schedule as per the FIPS standard
@@ -198,7 +204,7 @@ rv_t __sha512_msg_sched(uint64_t *sched, const uint64_t const *msg) {
             sched[j] = msg[j];
         }
 
-        for(j = 16; j < 80; j += 2) {
+        for(j = 16; j < SHA512_SCHED_WORD_LEN; j += 2) {
             // 2 at a time means less overhead
             sched[j] = SS1(sched[j-2]) + sched[j-7] + SS0(sched[j-15]) + sched[j-16];
             sched[j+1] = SS1(sched[j-1]) + sched[j-6] + SS0(sched[j-14]) + sched[j-15];
@@ -210,7 +216,8 @@ rv_t __sha512_msg_sched(uint64_t *sched, const uint64_t const *msg) {
     return retval;
 }
 
-/* SHA2-512 Computation
+/**
+ * SHA2-512 Computation
  *
  * Computes the SHA-512 hash on block boundary and is supplied the H(i-1)
  * This isn't intended to be exposed and could be shared between algos.
@@ -275,7 +282,8 @@ rv_t __sha512_compute(uint64_t *hash, const uint64_t const *msg) {
     return retval;
 }
 
-/* SHA512 Initialize
+/**
+ * SHA512 Initialize
  *
  * @param ctx       Pointer to sha-512 context to initialize
  *
@@ -305,6 +313,7 @@ rv_t sha512_initialize(hash_ctx_t *hash_ctx) {
     return rv;
 }
 
+// TODO Refactor into a header, as this is used by the other families
 static inline void __blk_htobe(uint64_t *data) {
     // We assume block size
     uint8_t i;
@@ -314,9 +323,10 @@ static inline void __blk_htobe(uint64_t *data) {
 }
 
 
-/* SHA256 Update
+/**
+ * SHA-512 Update
  *
- * @param ctx       Pointer to sha-256 context to operate on
+ * @param ctx       Pointer to sha-512 context to operate on
  * @param data      Pointer to data blob to bring into the hash
  * @param len       Length of the data that is being updated in bytes
  *
@@ -332,7 +342,7 @@ rv_t sha512_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
         // 1. If ctx->pos > 0, fill blk up and process, memmove data and change
         // length
         if (ctx->pos > 0) {
-            uint8_t avail = 64 - ctx->pos;
+            uint8_t avail = blk_sz - ctx->pos;
             if (len < avail) {
                 avail = len;
             }
@@ -342,19 +352,19 @@ rv_t sha512_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
             memmove((void*)data+avail, (void*)data, avail);
             len -= avail;
 
-            if (ctx->pos == 64) {
+            if (ctx->pos == blk_sz) {
                 __blk_htobe(ctx->blk);
                 __sha512_compute(ctx->common.hash, ctx->blk);
                 ctx->tot += avail;
 
-                memset(ctx->blk, 0, 16 * sizeof(uint32_t));
+                memset(ctx->blk, 0, 16 * sizeof(uint64_t));
                 ctx->pos = 0;
             }
         }
         
         // 2. If len % 64 != 0, move extra into ctx->blk
-        if (len > 0 && len % 64 != 0) {
-            uint8_t rem = len % 64;
+        if (len > 0 && len % blk_sz != 0) {
+            uint8_t rem = len % blk_sz;
             // If there was enough to process a block, we would have
             memcpy((void*)ctx->blk+ctx->pos, (void*)data+len-rem, rem);
             // No longer part of the length
@@ -366,10 +376,10 @@ rv_t sha512_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
         
         // 3. Compute the data in chunks of 64-bytes
         uint64_t cnt;
-        for (cnt = 0; cnt < len / 64; cnt++) {
-            __blk_htobe((void*)data+(64*cnt));
-            __sha512_compute(ctx->common.hash, (void*)data+(64*cnt));
-            ctx->tot += 64;
+        for (cnt = 0; cnt < len / blk_sz; cnt++) {
+            __blk_htobe((void*)data+(blk_sz*cnt));
+            __sha512_compute(ctx->common.hash, (void*)data+(blk_sz*cnt));
+            ctx->tot += blk_sz;
         }
 
         // 4. Set return value
@@ -379,7 +389,8 @@ rv_t sha512_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
     return rv;
 }
 
-/* SHA-512 Finalize
+/**
+ * SHA-512 Finalize
  *
  * Finish the SHA-512 computation. This pads the blocks correctly and does the
  * final update to the hash.
@@ -398,19 +409,19 @@ rv_t sha512_finalize(hash_ctx_t *hash_ctx) {
         // 1. Append 0x80 to the block and update the pos
         memset((void*)ctx->blk+ctx->pos, 0x80, 1);
         ctx->pos += 1;
-        
+
         // 2. If pos > 57, compute block, and clear
-        if (ctx->pos > 57) {
+        if (ctx->pos > last_blk_sz) {
             __blk_htobe(ctx->blk);
             __sha512_compute(ctx->common.hash, ctx->blk);
 
-            memset(ctx->blk, 0, 16 * sizeof(uint32_t));
+            memset(ctx->blk, 0, 16 * sizeof(uint64_t));
             ctx->pos = 0;
         }
 
         // 3. Append bitlen at the last 64-bit position
         uint64_t bits = htobe64(ctx->tot * 8);
-        memcpy(((void*)ctx->blk)+64-sizeof(uint64_t), &bits, sizeof(uint64_t));
+        memcpy(((void*)ctx->blk)+blk_sz-sizeof(uint64_t), &bits, sizeof(uint64_t));
 
         // 4. compute the last block
         __blk_htobe(ctx->blk);

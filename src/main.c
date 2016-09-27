@@ -72,12 +72,16 @@ static hash_algo_t named_algos[] = {
 //        .init = NULL,
 //        .update = NULL,
 //        .final = NULL
-//    },{
-//        .name = "sha512",
-//        ,binary_name = "sha512sum",
-//        .init = NULL,
-//        .update = NULL,
-//        .final = NULL
+    },{
+        .name = "SHA512",
+        .binary_name = "sha512sum",
+        .init = sha512_initialize,
+        .update = sha512_update,
+        .final = sha512_finalize,
+        .new = sha512_ctx_new,
+        .free = sha512_ctx_free,
+        .print = sha512_print,
+        .print_bsd = sha512_print_bsd,
 //    },{
 //        .name = "sha512/224",
 //        .init = NULL,

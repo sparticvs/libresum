@@ -28,44 +28,38 @@
 
 #include "base_types.h"
 
+#define SHA512_WORD_BIT_SZ          64
+#define SHA512_WORD_SZ              (SHA512_WORD_BIT_SZ / 8)
+#define SHA512_HASH_WORD_LEN        8
+
+#define SHA512_BLOCK_BIT_LEN        1024
+#define SHA512_BLOCK_LEN            (SHA512_BLOCK_BIT_LEN / 8)
+#define SHA512_BLOCK_WORD_LEN       (SHA512_BLOCK_LEN / SHA512_WORD_SZ)
+
+#define SHA512_SCHED_WORD_LEN       80
+
+#define SHA512_MSG_LEN_BIT_LEN      128
+#define SHA512_MSG_LEN_LEN          (SHA512_MSG_LEN_BIT_LEN / 8)
+
+#define SHA512_LAST_BLOCK_BIT_MAX   SHA512_BLOCK_BIT_LEN - SHA512_MSG_LEN_BIT_LEN
+#define SHA512_LAST_BLOCK_MAX       (SHA512_LAST_BLOCK_BIT_MAX / 8)
+
 typedef struct {
     hash_ctx_t common;
-    uint64_t blk[16];
-    uint32_t pos;
+    uint64_t blk[SHA512_BLOCK_WORD_LEN];
+    uint64_t pos;
     uint64_t tot;
 } sha512_ctx_t;
 
 ///--- Prototypes
-hash_ctx_t* sha512_ctx_new(void);
+hash_ctx_t* sha512_ctx_new(hash_algo_t *algo);
 void sha512_ctx_free(hash_ctx_t *ctx);
 
 rv_t sha512_initialize(hash_ctx_t *ctx);
 rv_t sha512_update(hash_ctx_t *ctx, uint8_t *data, uint64_t len);
 rv_t sha512_finalize(hash_ctx_t *ctx);
 
-typedef struct {
-    char *tv;
-    uint64_t len;
-    uint32_t hash[8];
-} testvector_t;
+void sha512_print(hash_ctx_t *ctx, const char *fname);
+void sha512_print_bsd(hash_ctx_t *ctx, const char *fname);
 
-typedef struct {
-    FILE *fp;
-    uint32_t hash[8];
-    char *filename;
-    uint32_t flags;
-} checkentry_t;
-
-/*
- * Note: This requires a 64-bit CPU...Need to fix this and remove the
- * requirement.
- */
-
-#define CH(x,y,z)   ((x&y)^(~x&z))
-#define MAJ(x,y,z)  ((x&y)^(x&z)^(y&z))
-#define ROTR(n,x)   ((x>>n)|(x<<(64-n)))
-#define CS0(x)      (ROTR(28,x) ^ ROTR(34,x) ^ ROTR(39,x))
-#define CS1(x)      (ROTR(14,x) ^ ROTR(18,x) ^ ROTR(41,x))
-#define SS0(x)      (ROTR(1,x) ^ ROTR(8,x) ^ (x >> 7))
-#define SS1(x)      (ROTR(19,x) ^ ROTR(61,x) ^ (x >> 6))
 #endif //_SHA512_H__
