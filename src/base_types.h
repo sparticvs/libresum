@@ -45,10 +45,15 @@ typedef uint8_t rv_t;
 struct hash_algo;
 typedef struct hash_algo hash_algo_t;
 
+/**
+ * @note
+ * These are required parameters that will need to be populated by the
+ * conclusion of your calculations.
+ */
 typedef struct {
     hash_algo_t *algo;
-    uint32_t *hash;
-    uint32_t len;
+    void *hash;
+    size_t len;
 } hash_ctx_t;
 
 struct hash_algo {

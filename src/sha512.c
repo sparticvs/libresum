@@ -290,14 +290,7 @@ rv_t sha512_initialize(hash_ctx_t *hash_ctx) {
         sha512_ctx_t *ctx = (sha512_ctx_t*)hash_ctx;
 
         // We are in a stable state, initialize
-        ctx->common.hash[0] = 0x6a09e667f3bcc908;
-        ctx->common.hash[1] = 0xbb67ae8584caa73b;
-        ctx->common.hash[2] = 0x3c6ef372fe94f82b;
-        ctx->common.hash[3] = 0xa54ff53a5f1d36f1;
-        ctx->common.hash[4] = 0x510e527fade682d1;
-        ctx->common.hash[5] = 0x9b05688c2b3e6c1f;
-        ctx->common.hash[6] = 0x1f83d9abfb41bd6b;
-        ctx->common.hash[7] = 0x5be0cd19137e2179;
+        memcpy(ctx->common.hash, H512, SHA512_WORD_SZ * SHA512_HASH_WORD_LEN);
 
         // Clear out the blk
         memset(ctx->blk, 0, SHA512_WORD_SZ * SHA512_HASH_WORD_LEN);
@@ -431,7 +424,18 @@ rv_t sha512_finalize(hash_ctx_t *hash_ctx) {
 }
 
 void sha512_print(hash_ctx_t *ctx, const char *fname) {
+    size_t i;
+    for(i = 0; i < ctx->len; i++) {
+        printf("%016llx", ((uint64_t*)ctx->hash)[i]);
+    }
+    printf(" %c%s\n", ' ', fname);
 }
 
 void sha512_print_bsd(hash_ctx_t *ctx, const char *fname) {
+    size_t i;
+    printf("%s (%s) = ", ctx->algo->name, fname);
+    for(i = 0; i < ctx->len; i++) {
+        printf("%016llx", ((uint64_t*)ctx->hash)[i]);
+    }
+    printf("\n");
 }
