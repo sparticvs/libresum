@@ -298,7 +298,7 @@ int main(int argc, char **argv) {
 
     if(opts.check) {
         // TODO Build a check table
-        // TODO Calculate the sum of each file that is inculded in the file
+        // TODO Calculate the sum of each file that is included in the file
         // TODO Compare with the check table
         // TODO Output the result depending on the flags that were set
     } else {
