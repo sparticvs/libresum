@@ -4,7 +4,7 @@ project (LibreSUM)
 enable_language(C)
 
 set (LibreSUM_VERSION_MAJOR 0)
-set (LibreSUM_VERSION_MINOR 1)
+set (LibreSUM_VERSION_MINOR 2)
 
 add_subdirectory(src)
 

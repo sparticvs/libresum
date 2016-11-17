@@ -2,12 +2,12 @@
 A completely free to use checksum program. This implements the following
 checksum algorithms:
   - SHA-256 (FIPS 180-4)
+  - SHA-512 (FIPS 180-4)
 
 The goal is to implement all of these:
   - SHA1 (FIPS 180-4)
   - SHA-224 (FIPS 180-4)
   - SHA-384 (FIPS 180-4)
-  - SHA-512 (FIPS 180-4)
   - SHA-512/224 (FIPS 180-4)
   - SHA-512/256 (FIPS 180-4)
   - SHA3-224 (FIPS 202)
@@ -62,3 +62,50 @@ certification status into the codebase, so contact me on GitHub.
 ## How do I know you didn't just copy GNU...
 Well you just have to trust me. I wrote this following the spec and validated
 it was operating correctly against NESSIE's test vectors.
+
+## Roadmap
+I'd like to start giving people a general understanding of the roadmap for this project.
+
+### v0.1 (Released)
+
+#### Features
+- SHA-256 Support
+- Multi-file summing support
+- Multiple-Entry Binary support
+
+### v0.2 (Released)
+
+#### Features
+- SHA-512 Support
+- Add BSD output capability
+
+### v0.3 (Planned)
+
+The purpose of this release is to add additional functionality to validate the
+API's implementation strategy as well as provide much needed validation
+support.
+
+#### Features
+- SHA-224
+- SHA-384
+- Checksum validation
+
+### v0.4 (Planned)
+
+The ultimate goal of this release is to start to transition the hashing
+functionality and APIs off into a separate library that will allow for
+better code coverage testing.
+
+#### Features
+- SHA-1 Support
+- SHA Family Library extraction
+- Unit Test Code Coverage min of 50%
+
+### v0.5 (Planned)
+
+Features will be flowed into this project from the newly segregated library.
+
+#### Features
+- SHA512/224 Support
+- SHA512/256 Support
+- Unit Test Code Coverage min of 75%

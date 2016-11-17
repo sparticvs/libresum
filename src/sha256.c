@@ -1,4 +1,4 @@
-/* sha256sum.c - Calculate the SHA256 sum of a file.
+/* sha256.c - Implementation of the SHA-256 algorithm
  *
  * The MIT License (MIT)
  *
@@ -72,9 +72,17 @@
 #include <endian.h>
 #endif
 #include "base_types.h"
-#include "sha2.h"
+#include "sha256.h"
 
 #define ARRAY_SZ    1024*32
+
+#define CH(x,y,z)   ((x&y)^(~x&z))
+#define MAJ(x,y,z)  ((x&y)^(x&z)^(y&z))
+#define ROTR(n,x)   ((x>>n)|(x<<(32-n)))
+#define CS0(x)      (ROTR(2,x) ^ ROTR(13,x) ^ ROTR(22,x))
+#define CS1(x)      (ROTR(6,x) ^ ROTR(11,x) ^ ROTR(25,x))
+#define SS0(x)      (ROTR(7,x) ^ ROTR(18,x) ^ (x >> 3))
+#define SS1(x)      (ROTR(17,x) ^ ROTR(19,x) ^ (x >> 10))
 
 // TODO Move byte order functions to a compat.h file
 // TODO Implement validation checking input
@@ -99,12 +107,18 @@
 // investigate what those are and what we need to do for them.
 #define BSD_OUTPUT "SHA256 (%s) = %08x%08x%08x%08x%08x%08x%08x%08x\n"
 
-const uint32_t H256[] = {
-    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+static const uint32_t H256[] = {
+    0x6a09e667,
+    0xbb67ae85,
+    0x3c6ef372,
+    0xa54ff53a,
+    0x510e527f,
+    0x9b05688c,
+    0x1f83d9ab,
+    0x5be0cd19,
 };
 
-const uint32_t K256[] = {
+static const uint32_t K256[] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
     0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -123,18 +137,6 @@ const uint32_t K256[] = {
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-#define SHA256_WORD_BIT_SZ      32
-#define SHA256_WORD_SZ          SHA256_WORD_BIT_SZ / 8
-#define SHA256_HASH_WORD_LEN    8
-#define SHA256_BLOCK_BIT_LEN    512
-#define SHA256_BLOCK_LEN        SHA256_BLOCK_BIT_LEN / 8
-
-#define SHA256_MSG_LEN_BIT_LEN  64
-#define SHA256_MSG_LEN_LEN      SDA256_MSG_LEN_BIT_LEN / 8
-
-const int16_t blk_sz = 64;
-const int16_t last_blk_sz = 56;
-
 hash_ctx_t* sha256_ctx_new(hash_algo_t *algo) {
     sha256_ctx_t *ctx = NULL;
 
@@ -145,7 +147,7 @@ hash_ctx_t* sha256_ctx_new(hash_algo_t *algo) {
 
     ctx->common.algo = algo;
 
-    ctx->common.hash = malloc(sizeof(ctx->common.hash) * SHA256_HASH_WORD_LEN);
+    ctx->common.hash = malloc(SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
     if(NULL == ctx->common.hash) {
         free(ctx);
         return NULL;
@@ -164,7 +166,7 @@ void sha256_ctx_free(hash_ctx_t *ctx) {
     }
 }
 
-/*
+/**
  * SHA2-256 Message Schedule
  *
  * This will prepare the message schedule as per the FIPS standard
@@ -174,7 +176,7 @@ void sha256_ctx_free(hash_ctx_t *ctx) {
  *
  * @return Returns an RV_ value
  */
-rv_t __sha256_msg_sched(uint32_t *sched, const uint32_t const *msg) {
+rv_t __sha256_msg_sched(uint32_t *sched, const uint32_t * const msg) {
     rv_t retval = RV_UNKNOWN;
 
     if (NULL == sched || NULL == msg) {
@@ -198,7 +200,8 @@ rv_t __sha256_msg_sched(uint32_t *sched, const uint32_t const *msg) {
     return retval;
 }
 
-/* SHA2-256 Computation
+/**
+ * SHA2-256 Computation
  *
  * Computes the SHA-256 hash on block boundary and is supplied the H(i-1)
  * This isn't intended to be exposed and could be shared between algos.
@@ -208,7 +211,7 @@ rv_t __sha256_msg_sched(uint32_t *sched, const uint32_t const *msg) {
  *
  * @return Returns an RV_ value
  */
-rv_t __sha256_compute(uint32_t *hash, const uint32_t const *msg) {
+rv_t __sha256_compute(uint32_t *hash, const uint32_t * const msg) {
     rv_t retval = RV_UNKNOWN;
     if (NULL == hash || NULL == msg) {
         retval = RV_INVALARG;
@@ -349,7 +352,8 @@ rv_t __sha256_compute(uint32_t *hash, const uint32_t const *msg) {
 //    }
 //}
 
-/* SHA256 Initialize
+/**
+ * SHA256 Initialize
  *
  * @param ctx       Pointer to sha-256 context to initialize
  *
@@ -364,17 +368,10 @@ rv_t sha256_initialize(hash_ctx_t *hash_ctx) {
         sha256_ctx_t *ctx = (sha256_ctx_t*)hash_ctx;
 
         // We are in a stable state, initialize
-        ctx->common.hash[0] = 0x6a09e667;
-        ctx->common.hash[1] = 0xbb67ae85;
-        ctx->common.hash[2] = 0x3c6ef372;
-        ctx->common.hash[3] = 0xa54ff53a;
-        ctx->common.hash[4] = 0x510e527f;
-        ctx->common.hash[5] = 0x9b05688c;
-        ctx->common.hash[6] = 0x1f83d9ab;
-        ctx->common.hash[7] = 0x5be0cd19;
+        memcpy(ctx->common.hash, H256, SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
 
         // Clear out the blk
-        memset(ctx->blk, 0, 16 * sizeof(uint32_t));
+        memset(ctx->blk, 0, SHA256_BLOCK_WORD_LEN * SHA256_WORD_SZ);
 
         ctx->pos = 0;
         ctx->tot = 0;
@@ -389,13 +386,14 @@ rv_t sha256_initialize(hash_ctx_t *hash_ctx) {
 static inline void __blk_htobe(uint32_t *data) {
     // We assume block size
     uint8_t i;
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i < SHA256_BLOCK_WORD_LEN; i++) {
         data[i] = htobe32(data[i]);
     }
 }
 
 
-/* SHA256 Update
+/**
+ * SHA256 Update
  *
  * @param ctx       Pointer to sha-256 context to operate on
  * @param data      Pointer to data blob to bring into the hash
@@ -413,7 +411,7 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
         // 1. If ctx->pos > 0, fill blk up and process, memmove data and change
         // length
         if (ctx->pos > 0) {
-            uint8_t avail = 64 - ctx->pos;
+            uint8_t avail = SHA256_BLOCK_LEN - ctx->pos;
             if (len < avail) {
                 avail = len;
             }
@@ -423,19 +421,19 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
             memmove((void*)data+avail, (void*)data, avail);
             len -= avail;
 
-            if (ctx->pos == 64) {
+            if (ctx->pos == SHA256_BLOCK_LEN) {
                 __blk_htobe(ctx->blk);
                 __sha256_compute(ctx->common.hash, ctx->blk);
                 ctx->tot += avail;
 
-                memset(ctx->blk, 0, 16 * sizeof(uint32_t));
+                memset(ctx->blk, 0, SHA256_BLOCK_WORD_LEN * SHA256_WORD_SZ);
                 ctx->pos = 0;
             }
         }
 
         // 2. If len % 64 != 0, move extra into ctx->blk
-        if (len > 0 && len % 64 != 0) {
-            uint8_t rem = len % 64;
+        if (len > 0 && len % SHA256_BLOCK_LEN != 0) {
+            uint8_t rem = len % SHA256_BLOCK_LEN;
             // If there was enough to process a block, we would have
             memcpy((void*)ctx->blk+ctx->pos, (void*)data+len-rem, rem);
             // No longer part of the length
@@ -447,10 +445,10 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
 
         // 3. Compute the data in chunks of 64-bytes
         uint64_t cnt;
-        for (cnt = 0; cnt < len / 64; cnt++) {
-            __blk_htobe((void*)data+(64*cnt));
-            __sha256_compute(ctx->common.hash, (void*)data+(64*cnt));
-            ctx->tot += 64;
+        for (cnt = 0; cnt < len / SHA256_BLOCK_LEN; cnt++) {
+            __blk_htobe((void*)data+(SHA256_BLOCK_LEN*cnt));
+            __sha256_compute(ctx->common.hash, (void*)data+(SHA256_BLOCK_LEN*cnt));
+            ctx->tot += SHA256_BLOCK_LEN;
         }
 
         // 4. Set return value
@@ -460,7 +458,8 @@ rv_t sha256_update(hash_ctx_t *hash_ctx, uint8_t *data, uint64_t len) {
     return rv;
 }
 
-/* SHA-256 Finalize
+/**
+ * SHA-256 Finalize
  *
  * Finish the SHA-256 computation. This pads the blocks correctly and does the
  * final update to the hash.
@@ -481,17 +480,17 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
         ctx->pos += 1;
 
         // 2. If pos > 57, compute block, and clear
-        if (ctx->pos > 57) {
+        if (ctx->pos > SHA256_LAST_BLOCK_MAX + 1) {
             __blk_htobe(ctx->blk);
             __sha256_compute(ctx->common.hash, ctx->blk);
 
-            memset(ctx->blk, 0, 16 * sizeof(uint32_t));
+            memset(ctx->blk, 0, SHA256_BLOCK_WORD_LEN * SHA256_WORD_SZ);
             ctx->pos = 0;
         }
 
         // 3. Append bitlen at the last 64-bit position
-        uint64_t bits = htobe64(ctx->tot * 8);
-        memcpy(((void*)ctx->blk)+64-sizeof(uint64_t), &bits, sizeof(uint64_t));
+        uint64_t bits = htobe64(ctx->tot * 8); // Converting to bits inline
+        memcpy(((void*)ctx->blk)+SHA256_BLOCK_LEN-sizeof(uint64_t), &bits, sizeof(uint64_t));
 
         // 4. compute the last block
         __blk_htobe(ctx->blk);
@@ -505,64 +504,22 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
 }
 
 void sha256_print(hash_ctx_t *ctx, const char *fname) {
-    int i;
+    size_t i;
     for(i = 0; i < ctx->len; i++) {
-        printf("%08x", ctx->hash[i]);
+        printf("%08x", ((uint32_t*)ctx->hash)[i]);
     }
     printf(" %c%s\n", ' ', fname);
 }
 
 void sha256_print_bsd(hash_ctx_t *ctx, const char *fname) {
-    int i;
+    size_t i;
     printf("%s (%s) = ", ctx->algo->name, fname);
     for(i = 0; i < ctx->len; i++) {
-        printf("%08x", ctx->hash[i]);
+        printf("%08x", ((uint32_t*)ctx->hash)[i]);
     }
     printf("\n");
 }
 
-//int main(int argc, char **argv) {
-//    //unit_tests();
-//    const char *filename = "-";
-//    FILE *fp = stdin;
-//    uint32_t i;
-//    struct stat sb;
-//
-//    for (i = 1; i < argc; i++) {
-//        filename = argv[i];
-//
-//        if(stat(filename, &sb) == 0 && !S_ISREG(sb.st_mode)) {
-//            continue;
-//        }
-//        fp = fopen(filename, "r");
-//
-//        if(ferror(fp)) {
-//            // Unable to operate on it, error
-//            perror("opening");
-//            continue;
-//        }
-//
-////    if(argc > 1) {
-////        // We got a file, yes?
-////        filename = argv[1];
-////        fp = fopen(filename, "r");
-////    }
-//        uint8_t array[ARRAY_SZ] = {0};
-//        uint64_t actual = 0;
-//        hash_ctx_t ctx;
-//        sha256_initialize(&ctx);
-//        while (!feof(fp)) {
-//            memset(array, 0, sizeof(uint8_t) * ARRAY_SZ);
-//            actual = fread(array, 1, sizeof(uint8_t) * ARRAY_SZ, fp);
-//            sha256_update(&ctx, array, actual);
-//        }
-//        sha256_finalize(&ctx);
-//        fclose(fp);
-//        printf(DEFAULT_OUTPUT, ctx.h[0], ctx.h[1], ctx.h[2], ctx.h[3], ctx.h[4], ctx.h[5], ctx.h[6], ctx.h[7], ' ', filename);
-//    }
-//
-//    return 0;
-//}
 #define NESSIE_TV_MAX 8
 const testvector_t NESSIE_SHA256_TV[] = {
     { // Set 1, Vector 0
