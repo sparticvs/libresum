@@ -66,20 +66,20 @@ it was operating correctly against NESSIE's test vectors.
 ## Roadmap
 I'd like to start giving people a general understanding of the roadmap for this project.
 
-### v1.0 (Released)
+### v0.1 (Released)
 
 #### Features
 - SHA-256 Support
 - Multi-file summing support
 - Multiple-Entry Binary support
 
-### v1.1 (Released)
+### v0.2 (Released)
 
 #### Features
 - SHA-512 Support
 - Add BSD output capability
 
-### v1.2 (Planned)
+### v0.3 (Planned)
 
 The purpose of this release is to add additional functionality to validate the
 API's implementation strategy as well as provide much needed validation
@@ -90,7 +90,7 @@ support.
 - SHA-384
 - Checksum validation
 
-### v1.3 (Planned)
+### v0.4 (Planned)
 
 The ultimate goal of this release is to start to transition the hashing
 functionality and APIs off into a separate library that will allow for
@@ -101,7 +101,7 @@ better code coverage testing.
 - SHA Family Library extraction
 - Unit Test Code Coverage min of 50%
 
-### v1.4 (Planned)
+### v0.5 (Planned)
 
 Features will be flowed into this project from the newly segregated library.
 
