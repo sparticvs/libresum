@@ -2,12 +2,12 @@
 A completely free to use checksum program. This implements the following
 checksum algorithms:
   - SHA-256 (FIPS 180-4)
+  - SHA-384 (FIPS 180-4)
   - SHA-512 (FIPS 180-4)
 
 The goal is to implement all of these:
   - SHA1 (FIPS 180-4)
   - SHA-224 (FIPS 180-4)
-  - SHA-384 (FIPS 180-4)
   - SHA-512/224 (FIPS 180-4)
   - SHA-512/256 (FIPS 180-4)
   - SHA3-224 (FIPS 202)

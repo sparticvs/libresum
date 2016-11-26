@@ -1,4 +1,4 @@
-add_executable(libresum main.c sha256.c sha512.c)
+add_executable(libresum main.c sha256.c sha384.c sha512.c)
 
 set_property(TARGET libresum PROPERTY C_STANDARD 99)
 

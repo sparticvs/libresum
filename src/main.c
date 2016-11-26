@@ -31,6 +31,7 @@
 
 #include "base_types.h"
 #include "sha256.h"
+#include "sha384.h"
 #include "sha512.h"
 
 #define VER_MAJ     1
@@ -71,12 +72,16 @@ static hash_algo_t named_algos[] = {
         .free = sha256_ctx_free,
         .print = sha256_print,
         .print_bsd = sha256_print_bsd,
-//    },{
-//        .name = "sha384",
-//        .binary_name = "sha384sum",
-//        .init = NULL,
-//        .update = NULL,
-//        .final = NULL
+    },{
+        .name = "SHA384",
+        .binary_name = "sha384sum",
+        .init = sha384_initialize,
+        .update = sha384_update,
+        .final = sha384_finalize,
+        .new = sha384_ctx_new,
+        .free = sha384_ctx_free,
+        .print = sha384_print,
+        .print_bsd = sha384_print_bsd,
     },{
         .name = "SHA512",
         .binary_name = "sha512sum",
