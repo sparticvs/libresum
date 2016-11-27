@@ -35,8 +35,8 @@
 #include "sha384.h"
 #include "sha512.h"
 
-#define VER_MAJ     1
-#define VER_MIN     1
+#define VER_MAJ     0
+#define VER_MIN     3
 
 // Verify's Verbosity Levels
 #define LVL_DEFAULT 0
