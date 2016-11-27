@@ -1,13 +1,13 @@
 # LibreSUM
 A completely free to use checksum program. This implements the following
 checksum algorithms:
+  - SHA-224 (FIPS 180-4)
   - SHA-256 (FIPS 180-4)
   - SHA-384 (FIPS 180-4)
   - SHA-512 (FIPS 180-4)
 
 The goal is to implement all of these:
   - SHA1 (FIPS 180-4)
-  - SHA-224 (FIPS 180-4)
   - SHA-512/224 (FIPS 180-4)
   - SHA-512/256 (FIPS 180-4)
   - SHA3-224 (FIPS 202)
@@ -79,7 +79,7 @@ I'd like to start giving people a general understanding of the roadmap for this 
 - SHA-512 Support
 - Add BSD output capability
 
-### v0.3 (Planned)
+### v0.3 (In-Progress)
 
 The purpose of this release is to add additional functionality to validate the
 API's implementation strategy as well as provide much needed validation

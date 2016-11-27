@@ -30,12 +30,13 @@
 #include <assert.h>
 
 #include "base_types.h"
+#include "sha224.h"
 #include "sha256.h"
 #include "sha384.h"
 #include "sha512.h"
 
-#define VER_MAJ     1
-#define VER_MIN     1
+#define VER_MAJ     0
+#define VER_MIN     3
 
 // Verify's Verbosity Levels
 #define LVL_DEFAULT 0
@@ -57,12 +58,16 @@ static hash_algo_t named_algos[] = {
 //        .update = NULL,
 //        .final = NULL
 //    },{
-//        .name = "sha224",
-//        .binary_name = "sha224sum",
-//        .init = NULL,
-//        .update = NULL,
-//        .final = NULL
-//    },{
+        .name = "SHA224",
+        .binary_name = "sha224sum",
+        .init = sha224_initialize,
+        .update = sha224_update,
+        .final = sha224_finalize,
+        .new = sha224_ctx_new,
+        .free = sha224_ctx_free,
+        .print = sha224_print,
+        .print_bsd = sha224_print_bsd,
+    },{
         .name = "SHA256",
         .binary_name = "sha256sum",
         .init = sha256_initialize,
