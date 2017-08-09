@@ -62,4 +62,7 @@ rv_t sha512_finalize(hash_ctx_t *ctx);
 void sha512_print(hash_ctx_t *ctx, const char *fname);
 void sha512_print_bsd(hash_ctx_t *ctx, const char *fname);
 
+rv_t sha512_parse(const char *str, checkentry_t *entry);
+bool sha512_compare(hash_ctx_t *ctx, checkentry_t *entry);
+
 #endif //_SHA512_H__

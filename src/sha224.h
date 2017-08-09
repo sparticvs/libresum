@@ -60,5 +60,7 @@ rv_t sha224_finalize(hash_ctx_t *ctx);
 void sha224_print(hash_ctx_t *ctx, const char *fname);
 void sha224_print_bsd(hash_ctx_t *ctx, const char *fname);
 
+rv_t sha224_parse(const char *str, checkentry_t *entry);
+bool sha224_compare(hash_ctx_t *ctx, checkentry_t *entry);
 
 #endif //_SHA224_H__

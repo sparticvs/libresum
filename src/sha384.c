@@ -450,3 +450,39 @@ void sha384_print_bsd(hash_ctx_t *ctx, const char *fname) {
     }
     printf("\n");
 }
+
+rv_t sha384_parse(const char *str, checkentry_t *entry) {
+    size_t i = 0;
+    if(NULL == str || NULL == entry) {
+        return RV_INVALARG;
+    }
+
+    entry->valid_hash = malloc(SHA384_HASH_WORD_LEN * SHA384_WORD_SZ);
+    if(NULL == entry->valid_hash) {
+        return RV_NESTEDERR;
+    }
+    entry->len = SHA384_HASH_WORD_LEN;
+
+    for(i = 0; i < entry->len; i++) {
+        sscanf(str, "%16llx", ((uint64_t*)entry->valid_hash) + i);
+    }
+
+    return RV_SUCCESS;
+}
+
+bool sha384_compare(hash_ctx_t *ctx, checkentry_t *entry) {
+    size_t i;
+    if(NULL == ctx || NULL == entry) {
+        return false;
+    }
+
+    if(SHA384_HASH_WORD_LEN != entry->len) {
+        return false;
+    }
+
+    if(memcmp(ctx->hash, entry->valid_hash, SHA384_WORD_SZ * SHA384_HASH_WORD_LEN)) {
+        return false;
+    }
+
+    return true;
+}

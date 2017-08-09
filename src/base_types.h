@@ -27,6 +27,7 @@
 #define __BASE_TYPES_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef uint8_t rv_t;
 
@@ -42,7 +43,25 @@ typedef uint8_t rv_t;
  */
 #define RV_UNKNOWN      255
 
-struct hash_algo;
+/**
+ * Options from command line
+ */
+typedef struct {
+    char * algo;    ///< Pointer to Algorithm String
+    uint8_t binary; ///< Binary Mode Flag
+    uint8_t check;  ///< Check Mode Flag
+    uint8_t tag;    ///< BSD Format Flag
+    uint8_t text;   ///< Text Mode Flag
+    uint8_t level;  ///< Verbosity Level Flag
+    uint8_t warn;   ///< Warn Only Flag
+    uint8_t strict; ///< Strict Checking Flag
+} libresum_opts_t;
+
+typedef struct node node_t;
+struct node {
+    node_t *next;
+};
+
 typedef struct hash_algo hash_algo_t;
 
 /**
@@ -56,6 +75,18 @@ typedef struct {
     size_t len;
 } hash_ctx_t;
 
+/**
+ * Structure used by Checksum Validation
+ */
+typedef struct checkentry checkentry_t;
+struct checkentry {
+    checkentry_t *next;     ///< Next Node in the List
+    hash_algo_t *algo;       ///< Algorithm Name
+    void *valid_hash;       ///< Valid Hash to check against
+    size_t len;             ///< Length of the hash in bytes
+    char file[FILENAME_MAX];///< Name of file to validate
+};
+
 struct hash_algo {
     const char *name;
     const char *bsd_tag;
@@ -67,6 +98,9 @@ struct hash_algo {
     void (*free)(hash_ctx_t *);
     void (*print)(hash_ctx_t *, const char *);
     void (*print_bsd)(hash_ctx_t *, const char *);
+    rv_t (*parse)(const char *, checkentry_t *);
+    bool (*compare)(hash_ctx_t *, checkentry_t *);
 };
+
 
 #endif //_BASE_TYPES_H__

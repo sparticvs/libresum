@@ -85,7 +85,6 @@
 #define SS1(x)      (ROTR(17,x) ^ ROTR(19,x) ^ (x >> 10))
 
 // TODO Move byte order functions to a compat.h file
-// TODO Implement validation checking input
 // TODO Implement verbosity level when checking
 // TODO Implement NESSIE vectors on a test switch
 // TODO Flow control implementations
@@ -518,6 +517,43 @@ void sha256_print_bsd(hash_ctx_t *ctx, const char *fname) {
         printf("%08x", ((uint32_t*)ctx->hash)[i]);
     }
     printf("\n");
+}
+
+rv_t sha256_parse(const char *str, checkentry_t *entry) {
+    size_t i = 0;
+    if(NULL == str || NULL == entry) {
+        return RV_INVALARG;
+    }
+
+    // Look up the algorithm
+    entry->valid_hash = malloc(SHA256_HASH_WORD_LEN * SHA256_WORD_SZ);
+    if(NULL == entry->valid_hash) {
+        return RV_NESTEDERR;
+    }
+    entry->len = SHA256_HASH_WORD_LEN;
+
+    for(i = 0; i < entry->len; i++) {
+        sscanf(str, "%8x", ((uint32_t*)entry->valid_hash) + i);
+    }
+
+    return RV_SUCCESS;
+}
+
+bool sha256_compare(hash_ctx_t *ctx, checkentry_t *entry) {
+    size_t i;
+    if(NULL == ctx || NULL == entry) {
+        return false;
+    }
+
+    if(SHA256_HASH_WORD_LEN != entry->len) {
+        return false;
+    }
+
+    if(memcmp(ctx->hash, entry->valid_hash, SHA256_WORD_SZ * SHA256_HASH_WORD_LEN)) {
+        return false;
+    }
+
+    return true;
 }
 
 #define NESSIE_TV_MAX 8
