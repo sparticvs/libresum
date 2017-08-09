@@ -434,3 +434,39 @@ void sha224_print_bsd(hash_ctx_t *ctx, const char *fname) {
     }
     printf("\n");
 }
+
+rv_t sha224_parse(const char *str, checkentry_t *entry) {
+    size_t i = 0;
+    if(NULL == str || NULL == entry) {
+        return RV_INVALARG;
+    }
+
+    entry->valid_hash = malloc(SHA224_HASH_WORD_LEN * SHA224_WORD_SZ);
+    if(NULL == entry->valid_hash) {
+        return RV_NESTEDERR;
+    }
+    entry->len = SHA224_HASH_WORD_LEN;
+
+    for(i = 0; i < entry->len; i++) {
+        sscanf(str, "%8x", ((uint32_t*)entry->valid_hash) + i);
+    }
+
+    return RV_SUCCESS;
+}
+
+bool sha224_compare(hash_ctx_t *ctx, checkentry_t *entry) {
+    size_t i;
+    if(NULL == ctx || NULL == entry) {
+        return false;
+    }
+
+    if(SHA224_HASH_WORD_LEN != entry->len) {
+        return false;
+    }
+
+    if(memcmp(ctx->hash, entry->valid_hash, SHA224_WORD_SZ * SHA224_HASH_WORD_LEN)) {
+        return false;
+    }
+
+    return true;
+}

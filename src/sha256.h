@@ -25,7 +25,7 @@
 
 #ifndef __SHA256_H__
 #define __SHA256_H__
-
+#include <stdio.h>
 #include "base_types.h"
 
 #define SHA256_WORD_BIT_SZ          32
@@ -60,18 +60,14 @@ rv_t sha256_finalize(hash_ctx_t *ctx);
 void sha256_print(hash_ctx_t *ctx, const char *fname);
 void sha256_print_bsd(hash_ctx_t *ctx, const char *fname);
 
+rv_t sha256_parse(const char *str, checkentry_t *entry);
+bool sha256_compare(hash_ctx_t *ctx, checkentry_t *entry);
+
 typedef struct {
     char *tv;
     uint64_t len;
     uint32_t hash[8];
 } testvector_t;
-
-typedef struct {
-    FILE *fp;
-    uint32_t hash[8];
-    char *filename;
-    uint32_t flags;
-} checkentry_t;
 
 
 #endif //_SHA256_H__

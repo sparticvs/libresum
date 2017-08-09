@@ -191,7 +191,7 @@ void sha512_ctx_free(hash_ctx_t *ctx) {
  *
  * @return Returns an RV_ value
  */
-rv_t __sha512_msg_sched(uint64_t *sched, const uint64_t const *msg) {
+rv_t __sha512_msg_sched(uint64_t *sched, const uint64_t * const msg) {
     rv_t retval = RV_UNKNOWN;
 
     if (NULL == sched || NULL == msg) {
@@ -227,7 +227,7 @@ rv_t __sha512_msg_sched(uint64_t *sched, const uint64_t const *msg) {
  *
  * @return Returns an RV_ value
  */
-rv_t __sha512_compute(uint64_t *hash, const uint64_t const *msg) {
+rv_t __sha512_compute(uint64_t *hash, const uint64_t * const msg) {
     rv_t retval = RV_UNKNOWN;
     if (NULL == hash || NULL == msg) {
         retval = RV_INVALARG;
@@ -449,4 +449,40 @@ void sha512_print_bsd(hash_ctx_t *ctx, const char *fname) {
         printf("%016llx", ((uint64_t*)ctx->hash)[i]);
     }
     printf("\n");
+}
+
+rv_t sha512_parse(const char *str, checkentry_t *entry) {
+    size_t i = 0;
+    if(NULL == str || NULL == entry) {
+        return RV_INVALARG;
+    }
+
+    entry->valid_hash = malloc(SHA512_HASH_WORD_LEN * SHA512_WORD_SZ);
+    if(NULL == entry->valid_hash) {
+        return RV_NESTEDERR;
+    }
+    entry->len = SHA512_HASH_WORD_LEN;
+
+    for(i = 0; i < entry->len; i++) {
+        sscanf(str, "%16llx", ((uint64_t*)entry->valid_hash) + i);
+    }
+
+    return RV_SUCCESS;
+}
+
+bool sha512_compare(hash_ctx_t *ctx, checkentry_t *entry) {
+    size_t i;
+    if(NULL == ctx || NULL == entry) {
+        return false;
+    }
+
+    if(SHA512_HASH_WORD_LEN != entry->len) {
+        return false;
+    }
+
+    if(memcmp(ctx->hash, entry->valid_hash, SHA512_WORD_SZ * SHA512_HASH_WORD_LEN)) {
+        return false;
+    }
+
+    return true;
 }

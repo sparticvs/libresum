@@ -67,6 +67,8 @@ static hash_algo_t named_algos[] = {
         .free = sha224_ctx_free,
         .print = sha224_print,
         .print_bsd = sha224_print_bsd,
+        .parse = sha224_parse,
+        .compare = sha224_compare,
     },{
         .name = "SHA256",
         .binary_name = "sha256sum",
@@ -77,6 +79,8 @@ static hash_algo_t named_algos[] = {
         .free = sha256_ctx_free,
         .print = sha256_print,
         .print_bsd = sha256_print_bsd,
+        .parse = sha256_parse,
+        .compare = sha256_compare,
     },{
         .name = "SHA384",
         .binary_name = "sha384sum",
@@ -87,6 +91,8 @@ static hash_algo_t named_algos[] = {
         .free = sha384_ctx_free,
         .print = sha384_print,
         .print_bsd = sha384_print_bsd,
+        .parse = sha384_parse,
+        .compare = sha384_compare,
     },{
         .name = "SHA512",
         .binary_name = "sha512sum",
@@ -97,6 +103,8 @@ static hash_algo_t named_algos[] = {
         .free = sha512_ctx_free,
         .print = sha512_print,
         .print_bsd = sha512_print_bsd,
+        .parse = sha512_parse,
+        .compare = sha512_compare,
 //    },{
 //        .name = "sha512/224",
 //        .init = NULL,
@@ -132,17 +140,6 @@ static hash_algo_t named_algos[] = {
     }
 };
 
-// Options Structure
-typedef struct {
-    char * algo;    ///< Pointer to Algorithm String
-    uint8_t binary; ///< Binary Mode Flag
-    uint8_t check;  ///< Check Mode Flag
-    uint8_t tag;    ///< BSD Format Flag
-    uint8_t text;   ///< Text Mode Flag
-    uint8_t level;  ///< Verbosity Level Flag
-    uint8_t warn;   ///< Warn Only Flag
-    uint8_t strict; ///< Strict Checking Flag
-} libresum_opts_t;
 
 static libresum_opts_t opts = {
     .algo = NULL,
@@ -200,7 +197,7 @@ void print_version() {
     printf("libresum v%d.%d\n", VER_MAJ, VER_MIN);
     printf("----------------------------------------------\n");
     printf("Supported Algorithms\n");
-    
+
     int i = 0;
     for (i = 0; NULL != named_algos[i].name; i++) {
         if (i > 0) {
@@ -238,6 +235,43 @@ hash_algo_t *get_algo_by_binary(const char *binary) {
     }
 
     return NULL;
+}
+
+rv_t checkentry_init(checkentry_t *entry) {
+    if(NULL == entry) {
+        return RV_INVALARG;
+    }
+
+    entry->next = NULL;
+    entry->algo = NULL;
+    entry->valid_hash = NULL;
+    entry->len = 0;
+
+    return RV_SUCCESS;
+}
+
+checkentry_t *checkentry_new() {
+    checkentry_t *entry = NULL;
+    rv_t ret = 0;
+
+    entry = malloc(sizeof(checkentry_t));
+    if(entry) {
+        ret = checkentry_init(entry);
+        if(ret) {
+            perror("CheckEntry Init");
+            free(entry);
+            entry = NULL;
+        }
+    }
+
+    return entry;
+}
+
+void checkentry_free(checkentry_t *entry) {
+    if(entry) {
+        checkentry_free(entry->next);
+        free(entry);
+    }
 }
 
 int main(int argc, char **argv) {
@@ -291,15 +325,19 @@ int main(int argc, char **argv) {
         }
     }
 
-    // TODO Validate that the file for the requested hash exists
-
 #define ARRAY_SZ    1024*32
 
+    checkentry_t *chk_head = NULL;
+    checkentry_t *chk_tail = NULL;
     FILE *fp = NULL;
     char **files = default_inputs;
     uint8_t array[ARRAY_SZ];
     int ndx = 0;
+    rv_t ret = 0;
     uint64_t actual = 0;
+    ssize_t cline = 0;
+    size_t nline = 0;
+    char *line = NULL;
     if(optind < argc) {
         // Get the pointer to the files list
         files = argv;
@@ -307,11 +345,122 @@ int main(int argc, char **argv) {
     }
 
     if(opts.check) {
-        // TODO Build a check table
-        // TODO Calculate the sum of each file that is included in the file
-        // TODO Compare with the check table
-        // TODO Output the result depending on the flags that were set
+        // TODO Refactor to it's own function
+        for(; files[ndx]; ndx++) {
+            // Create the checksum validation list
+            fp = fopen(files[ndx], "r");
+            if(ferror(fp)) {
+                perror("Opening Checksum File");
+                continue;
+            }
+
+            while(!feof(fp)) {
+                checkentry_t *entry = checkentry_new();
+                if(NULL == entry) {
+                    perror("Allocation");
+                    exit(1);
+                }
+
+                cline = getline(&line, &nline, fp);
+                if(cline < 0) {
+                    perror("GetLine");
+                    exit(1);
+                }
+
+                char *tok = NULL;
+                size_t tlen = 0;
+                if(opts.tag) {
+                    // Parse BSD-style checksum file
+                    // Get Algo
+                    tok = strtok(line, " ");
+                    tlen = strlen(tok);
+                    entry->algo = get_algo_by_name(tok);
+                    // Get Filename
+                    tok = strtok(NULL, " (");
+                    tlen = strlen(tok);
+                    strncpy(entry->file, tok, FILENAME_MAX);
+                    // Get Hash to parse
+                    tok = strtok(NULL, " )=\r\n");
+                    tlen = strlen(tok);
+                    ret = entry->algo->parse(tok, entry);
+                    if(ret) {
+                        perror("Parsing");
+                        checkentry_free(entry);
+                        continue;
+                    }
+                    /**
+                     * Parse should just do the reading of the hash based on
+                     * the expected length. If it fails to validate then we
+                     * have a different issue and should terminate validation.
+                     */
+                } else {
+                    // Parse Perl-style checksum file
+                    entry->algo = algo;
+
+                    // Get the Hash
+                    tok = strtok(line, " ");
+                    tlen = strlen(tok);
+                    ret = entry->algo->parse(tok, entry);
+                    if(ret) {
+                        perror("Parsing");
+                        checkentry_free(entry);
+                        continue;
+                    }
+
+                    // Get the Filename (skip the flag)
+                    tok = strtok(NULL, " *\n\r");
+                    tlen = strlen(tok);
+                    strncpy(entry->file, tok, FILENAME_MAX);
+                }
+                free(line);
+
+                if(chk_head) {
+                    chk_tail->next = entry;
+                } else {
+                    chk_head = entry;
+                }
+                chk_tail = entry;
+            }
+
+            fclose(fp);
+        }
+
+        checkentry_t *itr = NULL;
+        for(itr = chk_head; itr; itr = itr->next) {
+            fp = fopen(itr->file, "r");
+
+            if(ferror(fp)) {
+                perror("Opening");
+                continue;
+            }
+
+            hash_ctx_t *ctx = itr->algo->new(itr->algo);
+            itr->algo->init(ctx);
+
+            while(!feof(fp)) {
+                memset(array, 0, sizeof(uint8_t) * ARRAY_SZ);
+                actual = fread(array, 1, sizeof(uint8_t) * ARRAY_SZ, fp);
+                itr->algo->update(ctx, array, actual);
+            }
+
+            itr->algo->final(ctx);
+
+            printf("%s ", itr->file);
+            if(itr->algo->compare(ctx, itr)) {
+                printf("OK\n");
+            } else {
+                printf("FAIL\n");
+            }
+
+            itr->algo->free(ctx);
+
+            fclose(fp);
+        }
+
+        checkentry_free(chk_head);
+
     } else {
+        // TODO Refactor to it's own function
         for(; files[ndx]; ndx++) {
             if(0 == strncmp("-", files[ndx], 1)) {
                 fp = stdin;
@@ -324,7 +473,10 @@ int main(int argc, char **argv) {
                 continue;
             }
 
+            // TODO Refactor "new" to "new_ctx" (call init within)
             hash_ctx_t *ctx = algo->new(algo);
+            // TODO Refactor "init" to "init_ctx" (shouldn't be needed unless
+            // on stack)
             algo->init(ctx);
 
             while(!feof(fp)) {
@@ -332,7 +484,7 @@ int main(int argc, char **argv) {
                 actual = fread(array, 1, sizeof(uint8_t) * ARRAY_SZ, fp);
                 algo->update(ctx, array, actual);
             }
-            
+
             algo->final(ctx);
 
             if(opts.tag) {
@@ -341,6 +493,7 @@ int main(int argc, char **argv) {
                 algo->print(ctx, files[ndx]);
             }
 
+            // TODO Refactor "free" to "free_ctx"
             algo->free(ctx);
 
             // Close any open file handles

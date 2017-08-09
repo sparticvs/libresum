@@ -62,4 +62,7 @@ rv_t sha384_finalize(hash_ctx_t *ctx);
 void sha384_print(hash_ctx_t *ctx, const char *fname);
 void sha384_print_bsd(hash_ctx_t *ctx, const char *fname);
 
+rv_t sha384_parse(const char *str, checkentry_t *entry);
+bool sha384_compare(hash_ctx_t *ctx, checkentry_t *entry);
+
 #endif //_SHA384_H__
