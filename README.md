@@ -79,7 +79,7 @@ I'd like to start giving people a general understanding of the roadmap for this 
 - SHA-512 Support
 - Add BSD output capability
 
-### v0.3 (In-Progress)
+### v0.3 (Released)
 
 The purpose of this release is to add additional functionality to validate the
 API's implementation strategy as well as provide much needed validation
@@ -90,7 +90,7 @@ support.
 - SHA-384
 - Checksum validation
 
-### v0.4 (Planned)
+### v0.4 (In-Progress)
 
 The ultimate goal of this release is to start to transition the hashing
 functionality and APIs off into a separate library that will allow for
