@@ -479,7 +479,7 @@ rv_t sha256_finalize(hash_ctx_t *hash_ctx) {
         ctx->pos += 1;
 
         // 2. If pos > 57, compute block, and clear
-        if (ctx->pos > SHA256_LAST_BLOCK_MAX + 1) {
+        if (ctx->pos > SHA256_LAST_BLOCK_MAX) {
             __blk_htobe(ctx->blk);
             __sha256_compute(ctx->common.hash, ctx->blk);
 
